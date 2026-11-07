@@ -1,0 +1,8 @@
+{
+  "name": "kyaw-thu-store",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Cash-on-delivery shop + Telegram order bot + admin panel (Vercel)",
+  "engines": { "node": "22.x" },
+  "dependencies": { "mongodb": "^6.8.0" }
+}
