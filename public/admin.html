@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="my" class="bg-slate-100">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>Admin Panel</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Padauk:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{font-family:'Padauk','Inter',sans-serif}.inp{width:100%;padding:.55rem .75rem;border:1px solid #e2e8f0;border-radius:.6rem;font-size:.875rem;background:#fff;outline:none}.inp:focus{box-shadow:0 0 0 2px #0ea5e9;border-color:#0ea5e9}.lbl{display:block;font-size:.75rem;font-weight:700;color:#334155;margin-bottom:.25rem}.btn{padding:.5rem .9rem;border-radius:.6rem;font-size:.8rem;font-weight:700;transition:.15s}.card{background:#fff;border:1px solid #e2e8f0;border-radius:1rem}</style>
+</head>
+<body class="text-slate-800 min-h-screen">
+
+<!-- LOGIN -->
+<div id="loginView" class="min-h-screen flex items-center justify-center p-4">
+  <form onsubmit="doLogin(event)" class="card p-6 w-full max-w-sm space-y-4 shadow-lg">
+    <div class="text-center"><div class="w-14 h-14 mx-auto rounded-2xl bg-slate-900 text-white flex items-center justify-center text-2xl mb-2"><i class="fa-solid fa-lock"></i></div>
+      <h1 class="font-bold text-lg">ဆိုင်ရှင် Admin Panel</h1><p class="text-xs text-slate-500">Password ရိုက်ထည့်၍ ဝင်ပါ</p></div>
+    <input id="pw" type="password" required autocomplete="current-password" placeholder="Password" class="inp">
+    <button id="loginBtn" class="btn w-full bg-slate-900 text-white py-2.5">ဝင်မည်</button>
+    <p id="loginErr" class="text-xs text-rose-600 text-center"></p>
+  </form>
+</div>
+
+<!-- APP -->
+<div id="appView" class="hidden">
+  <header class="bg-slate-900 text-white sticky top-0 z-30">
+    <div class="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
+      <div class="font-bold truncate"><i class="fa-solid fa-store me-2 text-sky-400"></i><span id="hdrName">Admin</span></div>
+      <div class="flex items-center gap-2 text-xs">
+        <a href="/" target="_blank" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20"><i class="fa-solid fa-up-right-from-square me-1"></i>ဆိုင်ကြည့်</a>
+        <button onclick="logout()" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20"><i class="fa-solid fa-right-from-bracket"></i></button>
+      </div>
+    </div>
+    <nav class="max-w-5xl mx-auto px-2 flex overflow-x-auto text-sm font-semibold" id="tabs"></nav>
+  </header>
+
+  <main class="max-w-5xl mx-auto p-4 space-y-4">
+    <section id="t-dash" class="space-y-4"></section>
+    <section id="t-orders" class="hidden space-y-3"></section>
+    <section id="t-products" class="hidden space-y-3"></section>
+    <section id="t-settings" class="hidden space-y-4"></section>
+  </main>
+</div>
+
+<!-- PRODUCT MODAL -->
+<div id="pModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+  <form onsubmit="saveProduct(event)" class="bg-white w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl max-h-[92vh] overflow-y-auto">
+    <div class="p-4 border-b flex justify-between items-center sticky top-0 bg-white z-10"><h3 id="pTitle" class="font-bold"></h3>
+      <button type="button" onclick="closeP()" class="text-slate-400 text-lg"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="p-4 space-y-3">
+      <input type="hidden" id="pId">
+      <div><label class="lbl">ဓာတ်ပုံ</label>
+        <div class="flex items-center gap-3">
+          <img id="pPrev" class="w-24 h-24 rounded-xl object-cover bg-slate-100 border" src="" alt="">
+          <div class="flex-1 space-y-2">
+            <label class="btn bg-sky-600 text-white inline-block cursor-pointer"><i class="fa-solid fa-camera me-1"></i>ဓာတ်ပုံ ရွေးမည်
+              <input id="pFile" type="file" accept="image/*" class="hidden" onchange="pickImage(this)"></label>
+            <p id="pImgMsg" class="text-[11px] text-slate-500">ဖုန်း gallery / ကင်မရာမှ တိုက်ရိုက်တင်နိုင်သည် (အလိုအလျောက် အရွယ်ချုံ့ပေးသည်)</p>
+            <button type="button" onclick="clearImg()" class="text-[11px] text-rose-500 underline">ပုံဖျက်မည်</button>
+          </div></div>
+        <input id="pImage" class="inp mt-2" placeholder="သို့မဟုတ် ပုံ link (https://...) ကို paste လုပ်ပါ" oninput="$('pPrev').src=this.value">
+      </div>
+      <div><label class="lbl">ပစ္စည်းအမည် *</label><input id="pName" required maxlength="100" class="inp"></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="lbl">ဈေးနှုန်း (ကျပ်) *</label><input id="pPrice" type="number" min="0" required class="inp"></div>
+        <div><label class="lbl">လျှော့ဈေး (မလိုပါက 0)</label><input id="pSale" type="number" min="0" value="0" class="inp"></div>
+      </div>
+      <div><label class="lbl">အမျိုးအစား *</label><input id="pCat" list="catList" required maxlength="40" class="inp" placeholder="ဥပမာ - အဝတ်အထည်"><datalist id="catList"></datalist></div>
+      <div><label class="lbl">အသေးစိတ်</label><textarea id="pDesc" rows="2" maxlength="500" class="inp"></textarea></div>
+      <label class="flex items-center gap-2 text-sm font-bold"><input id="pStock" type="checkbox" class="w-4 h-4"> Stock ရှိသည် (In Stock)</label>
+    </div>
+    <div class="p-4 border-t flex justify-end gap-2 sticky bottom-0 bg-white">
+      <button type="button" onclick="closeP()" class="btn border">မလုပ်တော့ပါ</button>
+      <button id="pSave" class="btn bg-sky-600 text-white px-5">သိမ်းမည်</button></div>
+  </form>
+</div>
+
+<div id="toast" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-[60] px-4 py-2 rounded-xl text-sm font-bold text-white shadow-lg"></div>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmt = n => Number(n || 0).toLocaleString('en-US') + ' Ks';
+const ST = { Pending: ['⏳ စောင့်ဆိုင်းဆဲ', 'bg-amber-100 text-amber-800'], Confirmed: ['✅ အတည်ပြုပြီး', 'bg-sky-100 text-sky-800'],
+  Delivering: ['🚚 ပို့ဆောင်နေ', 'bg-indigo-100 text-indigo-800'], Completed: ['🎉 ပြီးစီး', 'bg-emerald-100 text-emerald-800'], Rejected: ['❌ ငြင်းပယ်', 'bg-rose-100 text-rose-800'] };
+const TABS = [['dash', 'fa-chart-line', 'ခြုံငုံ'], ['orders', 'fa-list-check', 'အော်ဒါများ'], ['products', 'fa-boxes-stacked', 'ပစ္စည်းများ'], ['settings', 'fa-gear', 'ဆက်တင်']];
+let S = { products: [], orders: [], settings: {}, tg: {} }, token = localStorage.getItem('ks_admin') || '', tab = 'dash', filter = 'All', q = '', knownPending = null, tgInfo = null;
+
+function toast(msg, ok = true) {
+  const t = $('toast'); t.textContent = msg; t.className = 'fixed bottom-5 left-1/2 -translate-x-1/2 z-[60] px-4 py-2 rounded-xl text-sm font-bold text-white shadow-lg ' + (ok ? 'bg-emerald-600' : 'bg-rose-600');
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.add('hidden'), 3200);
+}
+async function api(action, data) {
+  const r = await fetch('/api/admin', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + token }, body: JSON.stringify({ action, ...data }) });
+  let d = {}; try { d = await r.json(); } catch (e) {}
+  if (r.status === 401 && action !== 'login') { logout(true); throw new Error('Login ပြန်ဝင်ပါ'); }
+  if (!r.ok) throw new Error(d.error || ('Error ' + r.status));
+  return d;
+}
+async function doLogin(e) {
+  e.preventDefault(); $('loginBtn').disabled = true; $('loginErr').textContent = '';
+  try { token = (await api('login', { password: $('pw').value })).token; localStorage.setItem('ks_admin', token); $('pw').value = ''; await start(); }
+  catch (err) { $('loginErr').textContent = err.message; }
+  $('loginBtn').disabled = false;
+}
+function logout(silent) { token = ''; localStorage.removeItem('ks_admin'); $('appView').classList.add('hidden'); $('loginView').classList.remove('hidden'); if (!silent) toast('ထွက်ပြီးပါပြီ'); }
+async function start() {
+  const d = await api('bootstrap'); S = d; knownPending = d.orders.filter(o => o.status === 'Pending').length;
+  $('loginView').classList.add('hidden'); $('appView').classList.remove('hidden'); renderAll();
+}
+function renderAll() { $('hdrName').textContent = (S.settings.shopName || 'Admin') + ' · Admin'; renderTabs(); renderDash(); renderOrders(); renderProducts(); renderSettings(); }
+function pendingCount() { return S.orders.filter(o => o.status === 'Pending').length; }
+function renderTabs() {
+  $('tabs').innerHTML = TABS.map(([k, ic, t]) => '<button onclick="go(\'' + k + '\')" class="relative px-4 py-3 whitespace-nowrap border-b-2 ' + (tab === k ? 'border-sky-400 text-white' : 'border-transparent text-slate-400 hover:text-white') + '"><i class="fa-solid ' + ic + ' me-1.5"></i>' + t +
+    (k === 'orders' && pendingCount() ? '<span class="ms-1.5 bg-rose-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">' + pendingCount() + '</span>' : '') + '</button>').join('');
+  document.title = (pendingCount() ? '(' + pendingCount() + ') ' : '') + 'Admin Panel';
+}
+function go(t) { tab = t; ['dash', 'orders', 'products', 'settings'].forEach(k => $('t-' + k).classList.toggle('hidden', k !== t)); renderTabs(); if (t === 'settings') loadTg(); }
+
+/* ---------- dashboard ---------- */
+function renderDash() {
+  const o = S.orders, today = new Date().toDateString();
+  const rev = o.filter(x => x.status === 'Completed').reduce((t, x) => t + x.totalAmount, 0);
+  const open = o.filter(x => x.status === 'Confirmed' || x.status === 'Delivering').reduce((t, x) => t + x.totalAmount, 0);
+  const st = (l, v, c, ic) => '<div class="card p-4 flex items-center justify-between"><div><p class="text-xs text-slate-500">' + l + '</p><p class="text-xl font-bold ' + c + '">' + v + '</p></div><i class="fa-solid ' + ic + ' text-2xl text-slate-300"></i></div>';
+  const pend = o.filter(x => x.status === 'Pending');
+  $('t-dash').innerHTML = '<div class="grid grid-cols-2 lg:grid-cols-4 gap-3">' +
+    st('စောင့်ဆိုင်းဆဲ အော်ဒါ', pend.length, 'text-amber-600', 'fa-hourglass-half') +
+    st('ယနေ့ အော်ဒါ', o.filter(x => new Date(x.createdAt).toDateString() === today).length, 'text-sky-600', 'fa-calendar-day') +
+    st('ရောင်းရငွေ (ပြီးစီး)', fmt(rev), 'text-emerald-600', 'fa-money-bill-wave') +
+    st('ပို့ဆောင်ရန် ကျန်ငွေ', fmt(open), 'text-indigo-600', 'fa-truck') + '</div>' +
+    '<div class="card p-4 flex items-center justify-between"><div><p class="font-bold text-sm">ဆိုင် အခြေအနေ</p><p class="text-xs text-slate-500">' + (S.settings.shopOpen ? 'ဖွင့်ထားသည် — အော်ဒါ လက်ခံနေသည်' : 'ပိတ်ထားသည် — အော်ဒါ လက်မခံပါ') + '</p></div>' +
+    '<button onclick="toggleShop()" class="btn ' + (S.settings.shopOpen ? 'bg-rose-100 text-rose-700' : 'bg-emerald-600 text-white') + '">' + (S.settings.shopOpen ? 'ဆိုင်ပိတ်မည်' : 'ဆိုင်ဖွင့်မည်') + '</button></div>' +
+    '<h3 class="font-bold text-sm pt-1">အတည်ပြုရန် စောင့်နေသော အော်ဒါများ</h3>' +
+    (pend.length ? pend.slice(0, 10).map(orderCard).join('') : '<div class="card p-6 text-center text-slate-400 text-sm">စောင့်ဆိုင်းနေသော အော်ဒါ မရှိပါ ✅</div>');
+}
+async function toggleShop() { try { const s = { ...S.settings, shopOpen: !S.settings.shopOpen }; S.settings = (await api('settingsSave', { settings: s })).settings; toast(S.settings.shopOpen ? 'ဆိုင်ဖွင့်ပြီး' : 'ဆိုင်ပိတ်ပြီး'); renderAll(); } catch (e) { toast(e.message, false); } }
+
+/* ---------- orders ---------- */
+function orderCard(o) {
+  const [lbl, cls] = ST[o.status] || [o.status, 'bg-slate-100'];
+  const b = (t, st, c) => '<button onclick="setSt(\'' + esc(o.id) + '\',\'' + st + '\')" class="btn ' + c + '">' + t + '</button>';
+  let acts = '';
+  if (o.status === 'Pending') acts = b('✅ Confirm', 'Confirmed', 'bg-emerald-600 text-white') + b('❌ Reject', 'Rejected', 'bg-rose-100 text-rose-700');
+  else if (o.status === 'Confirmed') acts = b('🚚 ပို့ဆောင်နေ', 'Delivering', 'bg-indigo-600 text-white') + b('🎉 ပြီးစီး', 'Completed', 'bg-emerald-600 text-white') + b('❌ Reject', 'Rejected', 'bg-rose-100 text-rose-700');
+  else if (o.status === 'Delivering') acts = b('🎉 ပြီးစီး', 'Completed', 'bg-emerald-600 text-white') + b('❌ Reject', 'Rejected', 'bg-rose-100 text-rose-700');
+  else acts = b('↩️ ပြန်ဖွင့်', 'Pending', 'bg-slate-100 text-slate-700');
+  return '<div class="card p-4 space-y-2"><div class="flex flex-wrap items-center justify-between gap-2"><div><span class="font-bold">' + esc(o.id) + '</span> <span class="text-xs text-slate-400">' + new Date(o.createdAt).toLocaleString() + '</span></div><span class="text-xs font-bold px-2.5 py-1 rounded-full ' + cls + '">' + lbl + '</span></div>' +
+    '<div class="text-sm space-y-0.5"><p><b>' + esc(o.customerName) + '</b> · <a class="text-sky-600 underline" href="tel:' + esc(o.customerPhone) + '">' + esc(o.customerPhone) + '</a></p><p class="text-slate-600">📍 ' + esc(o.customerAddress) + '</p>' +
+    (o.note ? '<p class="text-slate-600">📝 ' + esc(o.note) + '</p>' : '') + '</div>' +
+    '<div class="text-xs bg-slate-50 rounded-lg p-2 space-y-0.5">' + o.items.map(i => '<div class="flex justify-between"><span>' + esc(i.title) + ' × ' + i.qty + '</span><span>' + fmt(i.price * i.qty) + '</span></div>').join('') +
+    (o.deliveryFee ? '<div class="flex justify-between text-slate-500"><span>ပို့ခ</span><span>' + fmt(o.deliveryFee) + '</span></div>' : '') +
+    '<div class="flex justify-between font-bold text-emerald-700 pt-1 border-t"><span>စုစုပေါင်း (COD)</span><span>' + fmt(o.totalAmount) + '</span></div></div>' +
+    (o.adminNote ? '<p class="text-xs text-amber-700">🗒 ' + esc(o.adminNote) + '</p>' : '') +
+    '<div class="flex flex-wrap gap-2 pt-1">' + acts + '<button onclick="noteOrder(\'' + esc(o.id) + '\')" class="btn bg-slate-100 text-slate-600"><i class="fa-solid fa-pen"></i> မှတ်ချက်</button><button onclick="delOrder(\'' + esc(o.id) + '\')" class="btn text-rose-500 ms-auto"><i class="fa-solid fa-trash"></i></button></div></div>';
+}
+function renderOrders() {
+  const chips = ['All', ...Object.keys(ST)];
+  const list = S.orders.filter(o => (filter === 'All' || o.status === filter) && (!q || (o.id + o.customerName + o.customerPhone).toLowerCase().includes(q.toLowerCase())));
+  $('t-orders').innerHTML = '<div class="flex gap-2"><input class="inp" placeholder="ရှာရန် (အော်ဒါနံပါတ် / နာမည် / ဖုန်း)" value="' + esc(q) + '" oninput="q=this.value;renderOrdersList()">' +
+    '<button onclick="exportCsv()" class="btn bg-white border shrink-0"><i class="fa-solid fa-file-csv me-1"></i>CSV</button></div>' +
+    '<div class="flex gap-2 overflow-x-auto pb-1">' + chips.map(c => '<button onclick="filter=\'' + c + '\';renderOrders()" class="btn whitespace-nowrap ' + (filter === c ? 'bg-slate-900 text-white' : 'bg-white border') + '">' + (c === 'All' ? 'အားလုံး (' + S.orders.length + ')' : ST[c][0] + ' (' + S.orders.filter(o => o.status === c).length + ')') + '</button>').join('') + '</div>' +
+    '<div id="ordList" class="space-y-3"></div><div class="text-right"><button onclick="clearDone()" class="text-xs text-rose-600 underline">ပြီးစီး/ငြင်းပယ်ပြီး အော်ဒါများကို ရှင်းမည်</button></div>';
+  renderOrdersList();
+}
+function renderOrdersList() {
+  const list = S.orders.filter(o => (filter === 'All' || o.status === filter) && (!q || (o.id + o.customerName + o.customerPhone).toLowerCase().includes(q.toLowerCase())));
+  $('ordList').innerHTML = list.length ? list.map(orderCard).join('') : '<div class="card p-8 text-center text-slate-400 text-sm">အော်ဒါ မရှိပါ</div>';
+}
+async function setSt(id, status) {
+  let note;
+  if (status === 'Rejected') { note = prompt('ငြင်းပယ်ရသည့် အကြောင်းရင်း (ဝယ်သူ မြင်ရမည်၊ မလိုပါက ကွက်လပ်ထားပါ)', ''); if (note === null) return; }
+  try { const d = await api('orderStatus', { id, status, note }); const i = S.orders.findIndex(o => o.id === id); if (i > -1) S.orders[i] = d.order; toast('အောင်မြင်ပါသည်'); renderTabs(); renderDash(); renderOrders(); } catch (e) { toast(e.message, false); }
+}
+async function noteOrder(id) {
+  const o = S.orders.find(x => x.id === id); const n = prompt('မှတ်ချက် (ဝယ်သူ မြင်ရမည်)', o.adminNote || ''); if (n === null) return;
+  try { await api('orderNote', { id, note: n }); o.adminNote = n; renderDash(); renderOrders(); toast('သိမ်းပြီး'); } catch (e) { toast(e.message, false); }
+}
+async function delOrder(id) { if (!confirm(id + ' ကို ဖျက်မလား?')) return; try { await api('orderDelete', { id }); S.orders = S.orders.filter(o => o.id !== id); renderTabs(); renderDash(); renderOrders(); } catch (e) { toast(e.message, false); } }
+async function clearDone() { if (!confirm('ပြီးစီး / ငြင်းပယ်ပြီး အော်ဒါအားလုံးကို ဖျက်မလား?')) return; try { const d = await api('ordersClear'); toast(d.deleted + ' ခု ဖျက်ပြီး'); S.orders = (await api('orders')).orders; renderAll(); } catch (e) { toast(e.message, false); } }
+function exportCsv() {
+  const c = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  const rows = [['Order', 'Date', 'Status', 'Name', 'Phone', 'Address', 'Items', 'Delivery', 'Total', 'Note']].concat(S.orders.map(o => [o.id, new Date(o.createdAt).toLocaleString(), o.status, o.customerName, o.customerPhone, o.customerAddress, o.items.map(i => i.title + ' x' + i.qty).join('; '), o.deliveryFee, o.totalAmount, o.note]));
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\uFEFF' + rows.map(r => r.map(c).join(',')).join('\n')], { type: 'text/csv' })); a.download = 'orders-' + new Date().toISOString().slice(0, 10) + '.csv'; a.click();
+}
+setInterval(async () => {   // auto refresh every 20s
+  if (!token || document.hidden || $('appView').classList.contains('hidden')) return;
+  try {
+    S.orders = (await api('orders')).orders; const p = pendingCount();
+    if (knownPending !== null && p > knownPending) toast('🛒 အော်ဒါအသစ် ဝင်လာပါပြီ!');
+    knownPending = p; renderTabs(); renderDash(); if (!document.activeElement || document.activeElement.tagName !== 'INPUT') renderOrders();
+  } catch (e) {}
+}, 20000);
+
+/* ---------- products ---------- */
+function renderProducts() {
+  $('catList').innerHTML = [...new Set(S.products.map(p => p.category))].map(c => '<option value="' + esc(c) + '">').join('');
+  $('t-products').innerHTML = '<div class="flex justify-between items-center"><h3 class="font-bold">ပစ္စည်းစာရင်း (' + S.products.length + ')</h3><button onclick="openP()" class="btn bg-sky-600 text-white"><i class="fa-solid fa-plus me-1"></i>ပစ္စည်းအသစ်</button></div>' +
+    (S.products.length ? '<div class="grid sm:grid-cols-2 gap-3">' + S.products.map(p => '<div class="card p-3 flex gap-3"><img src="' + esc(p.image || 'https://placehold.co/100x100/e2e8f0/64748b?text=%20') + '" class="w-20 h-20 rounded-xl object-cover bg-slate-100 shrink-0">' +
+      '<div class="flex-1 min-w-0"><p class="font-bold text-sm truncate">' + esc(p.title) + '</p><p class="text-xs text-slate-500">' + esc(p.category) + '</p>' +
+      '<p class="text-sm font-bold text-sky-700">' + (p.salePrice > 0 && p.salePrice < p.price ? '<s class="text-slate-400 font-normal text-xs">' + fmt(p.price) + '</s> ' + fmt(p.salePrice) : fmt(p.price)) + '</p>' +
+      '<div class="flex gap-1.5 mt-1.5 flex-wrap"><button onclick="stock(\'' + esc(p.id) + '\')" class="btn !py-1 ' + (p.inStock ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700') + '">' + (p.inStock ? 'In Stock' : 'ကုန်နေ') + '</button>' +
+      '<button onclick="openP(\'' + esc(p.id) + '\')" class="btn !py-1 bg-slate-100"><i class="fa-solid fa-pen"></i></button><button onclick="delP(\'' + esc(p.id) + '\')" class="btn !py-1 bg-slate-100 text-rose-600"><i class="fa-solid fa-trash"></i></button></div></div></div>').join('') + '</div>'
+      : '<div class="card p-8 text-center text-slate-400 text-sm">ပစ္စည်း မရှိသေးပါ — "ပစ္စည်းအသစ်" ကိုနှိပ်ပါ</div>');
+}
+function openP(id) {
+  const p = id ? S.products.find(x => x.id === id) : { title: '', price: '', salePrice: 0, category: '', image: '', desc: '', inStock: true };
+  $('pTitle').textContent = id ? 'ပစ္စည်း ပြင်မည်' : 'ပစ္စည်းအသစ် ထည့်မည်';
+  $('pId').value = id || ''; $('pName').value = p.title; $('pPrice').value = p.price; $('pSale').value = p.salePrice || 0; $('pCat').value = p.category;
+  $('pImage').value = p.image; $('pPrev').src = p.image || 'https://placehold.co/200x200/e2e8f0/64748b?text=Photo'; $('pDesc').value = p.desc; $('pStock').checked = p.inStock;
+  $('pFile').value = ''; $('pImgMsg').textContent = 'ဖုန်း gallery / ကင်မရာမှ တိုက်ရိုက်တင်နိုင်သည် (အလိုအလျောက် အရွယ်ချုံ့ပေးသည်)'; $('pModal').classList.remove('hidden');
+}
+function closeP() { $('pModal').classList.add('hidden'); }
+function clearImg() { $('pImage').value = ''; $('pPrev').src = 'https://placehold.co/200x200/e2e8f0/64748b?text=Photo'; }
+async function shrink(file, max = 900, qual = .82) {
+  const url = URL.createObjectURL(file);
+  const img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => no(new Error('ဤပုံ ဖိုင်ကို ဖတ်မရပါ (jpg/png ကို သုံးကြည့်ပါ)')); i.src = url; });
+  const k = Math.min(1, max / Math.max(img.width, img.height)), w = Math.round(img.width * k), h = Math.round(img.height * k);
+  const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); x.drawImage(img, 0, 0, w, h);
+  URL.revokeObjectURL(url); return c.toDataURL('image/jpeg', qual);
+}
+async function pickImage(inp) {
+  const f = inp.files[0]; if (!f) return;
+  $('pSave').disabled = true; $('pImgMsg').textContent = '⏳ ပုံ တင်နေသည်...';
+  try { const d = await api('upload', { dataUrl: await shrink(f) }); $('pImage').value = d.url; $('pPrev').src = d.url; $('pImgMsg').textContent = '✅ ပုံတင်ပြီးပါပြီ'; }
+  catch (e) { $('pImgMsg').textContent = '⚠️ ' + e.message; }
+  $('pSave').disabled = false;
+}
+async function saveProduct(e) {
+  e.preventDefault(); $('pSave').disabled = true;
+  try { await api('productSave', { product: { id: $('pId').value, title: $('pName').value, price: $('pPrice').value, salePrice: $('pSale').value, category: $('pCat').value, image: $('pImage').value.trim(), desc: $('pDesc').value, inStock: $('pStock').checked } });
+    S.products = (await api('bootstrap')).products; closeP(); renderProducts(); toast('သိမ်းပြီးပါပြီ'); }
+  catch (err) { toast(err.message, false); }
+  $('pSave').disabled = false;
+}
+async function stock(id) { const p = S.products.find(x => x.id === id); try { await api('productStock', { id, inStock: !p.inStock }); p.inStock = !p.inStock; renderProducts(); } catch (e) { toast(e.message, false); } }
+async function delP(id) { if (!confirm('ဤပစ္စည်းကို ဖျက်မလား?')) return; try { await api('productDelete', { id }); S.products = S.products.filter(p => p.id !== id); renderProducts(); toast('ဖျက်ပြီး'); } catch (e) { toast(e.message, false); } }
+
+/* ---------- settings ---------- */
+function renderSettings() {
+  const s = S.settings, f = (id, l, v, ph, t) => '<div><label class="lbl">' + l + '</label><input id="s_' + id + '" type="' + (t || 'text') + '" class="inp" value="' + esc(v) + '" placeholder="' + esc(ph || '') + '"></div>';
+  $('t-settings').innerHTML = '<form onsubmit="saveSettings(event)" class="space-y-4">' +
+    '<div class="card p-4 space-y-3"><h3 class="font-bold text-sm">🏪 ဆိုင်အချက်အလက်</h3>' + f('shopName', 'ဆိုင်အမည်', s.shopName) + f('tagline', 'ဆိုင်အကြောင်း တစ်ကြောင်းတည်း', s.tagline) + f('heroTitle', 'ပင်မ ခေါင်းစဉ်', s.heroTitle) + f('heroText', 'ပင်မ ရှင်းလင်းချက်', s.heroText) +
+    f('announcement', '📢 ကြေညာချက် (ဆိုင်ထိပ်မှာ ပြမည်၊ မလိုပါက ဖျက်ထားပါ)', s.announcement) +
+    '<label class="flex items-center gap-2 text-sm font-bold"><input id="s_shopOpen" type="checkbox" class="w-4 h-4" ' + (s.shopOpen ? 'checked' : '') + '> ဆိုင်ဖွင့်ထားသည် (အော်ဒါလက်ခံမည်)</label>' + f('closedMessage', 'ဆိုင်ပိတ်ချိန် ပြမည့် စာ', s.closedMessage) + '</div>' +
+    '<div class="card p-4 space-y-3"><h3 class="font-bold text-sm">📞 ဝယ်သူ ဆက်သွယ်ရန်</h3>' +
+    f('telegramLink', 'Telegram link (ဝယ်သူများ ဤ link ကို နှိပ်ရောက်မည်)', s.telegramLink, 'https://t.me/yourname သို့ @yourname') + f('viberNumber', 'Viber နံပါတ်', s.viberNumber, '+959xxxxxxxxx') + f('phone', 'ဖုန်းနံပါတ်', s.phone, '09xxxxxxxxx') + '</div>' +
+    '<div class="card p-4 space-y-3"><h3 class="font-bold text-sm">🚚 ပို့ခ</h3><div class="grid grid-cols-2 gap-3">' + f('deliveryFee', 'ပို့ခ (ကျပ်)', s.deliveryFee, '0', 'number') + f('freeDeliveryOver', 'ဤပမာဏအထက် ပို့ခအခမဲ့ (0 = မသုံး)', s.freeDeliveryOver, '0', 'number') + '</div></div>' +
+    '<div class="card p-4 space-y-3"><h3 class="font-bold text-sm">🤖 Telegram အော်ဒါ အကြောင်းကြားစာ</h3><div id="tgBox" class="text-xs text-slate-600 space-y-1">စစ်ဆေးနေသည်...</div>' +
+    f('tgChatId', 'Admin Telegram Chat ID (Bot ကို /start လုပ်ပါက ပြန်ပြောပြမည်၊ အများကြီးဆို , ခံထည့်ပါ)', s.tgChatId, '123456789') +
+    '<div class="flex flex-wrap gap-2"><button type="button" onclick="tgSetup()" class="btn bg-sky-600 text-white">① Webhook ချိတ်မည်</button><button type="button" onclick="tgTest()" class="btn bg-white border">② စမ်းသပ်စာ ပို့မည်</button></div>' +
+    '<p class="text-[11px] text-slate-500">အော်ဒါဝင်လာတိုင်း Bot က ဤ Chat ID သို့ ✅ Confirm / ❌ Reject ခလုတ်ပါသော စာပို့မည်။ ခလုတ်နှိပ်လျှင် Admin Panel နှင့် ဝယ်သူ၏ အော်ဒါစစ်ရာတွင်ပါ ချက်ချင်းပြောင်းမည်။ (Chat ID ကို အရင် သိမ်းပြီးမှ ② ကိုနှိပ်ပါ)</p></div>' +
+    '<button id="sSave" class="btn bg-slate-900 text-white w-full py-3 text-sm">💾 ဆက်တင်အားလုံး သိမ်းမည်</button></form>';
+}
+async function saveSettings(e) {
+  e.preventDefault(); const g = id => $('s_' + id), s = {};
+  ['shopName', 'tagline', 'heroTitle', 'heroText', 'announcement', 'closedMessage', 'telegramLink', 'viberNumber', 'phone', 'deliveryFee', 'freeDeliveryOver', 'tgChatId'].forEach(k => s[k] = g(k).value); s.shopOpen = g('shopOpen').checked;
+  $('sSave').disabled = true;
+  try { S.settings = (await api('settingsSave', { settings: s })).settings; toast('သိမ်းပြီးပါပြီ'); renderAll(); go('settings'); } catch (err) { toast(err.message, false); }
+  $('sSave').disabled = false;
+}
+async function loadTg() {
+  try { tgInfo = await api('tgInfo'); } catch (e) { tgInfo = { error: e.message }; }
+  const b = $('tgBox'); if (!b) return; const i = tgInfo;
+  if (!i.hasToken) b.innerHTML = '<p class="text-rose-600 font-bold">⚠️ TELEGRAM_BOT_TOKEN ကို Vercel Environment Variables ထဲ မထည့်ရသေးပါ</p>';
+  else if (i.error) b.innerHTML = '<p class="text-rose-600 font-bold">⚠️ Bot token မမှန်ပါ: ' + esc(i.error) + '</p>';
+  else b.innerHTML = '<p>🤖 Bot: <b>@' + esc(i.bot) + '</b> (Telegram မှာ ဤ Bot ကို ရှာပြီး /start နှိပ်ပါ)</p><p>Webhook: ' + (i.webhook ? '<span class="text-emerald-600 font-bold">ချိတ်ပြီး ✅</span> <span class="text-slate-400 break-all">' + esc(i.webhook) + '</span>' : '<span class="text-rose-600 font-bold">မချိတ်ရသေးပါ — ① ကိုနှိပ်ပါ</span>') + '</p>' + (i.lastError ? '<p class="text-rose-600">နောက်ဆုံး error: ' + esc(i.lastError) + '</p>' : '');
+}
+async function tgSetup() { try { const d = await api('tgSetup'); toast('Webhook ချိတ်ပြီး (@' + d.bot + ')'); loadTg(); } catch (e) { toast(e.message, false); } }
+async function tgTest() { try { const d = await api('tgTest'); toast('စမ်းသပ်စာ ပို့ပြီး (' + d.sent + ')'); } catch (e) { toast(e.message, false); } }
+
+if (token) start().catch(() => logout(true));
+</script>
+</body>
+</html>
